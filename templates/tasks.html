@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    <link rel="stylesheet" href="https://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css">
+    <script src="https://apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/styles/main.css">
+    <title>任务列表</title>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="panel panel-default">
+          <div class="panel-heading">任务记录</div>
+          <table class="table">
+            <tr>
+              <th width="200">md5</th>
+              <th width="100">单位</th>
+              <th>下次</th>
+              <th>回调</th>
+              <th>操作</th>
+            </tr>
+            {{range $value := .tasks}}
+            <tr>
+              <td>{{.Key}}</td>
+              <td>{{.Value.Unit}}</td>
+            
+              <td><a href="/scheduler/del/{{.Key}}">删除</a></td>
+            </tr>
+            {{end}}
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
