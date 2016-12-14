@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const (
 	DATE_FORMAT = "2006-01-02 15:04"
+	TaskTable   = "task-"
 )
 
 //精度支持到分钟
@@ -26,6 +28,10 @@ type Task struct {
 	Unit string `json:"unit"`
 
 	LastRun time.Time `json:"lastRun"`
+}
+
+type TaskRun struct {
+	Task
 }
 
 type DbTask struct {
@@ -49,7 +55,7 @@ func init() {
 }
 
 func initJob() {
-	iter := db.NewIterator(nil, nil)
+	iter := db.NewIterator(util.BytesPrefix([]byte(TaskTable)), nil)
 
 	for iter.Next() {
 		key := iter.Key()
@@ -65,7 +71,7 @@ func initJob() {
 }
 
 func Tasks() []*DbTask {
-	iter := db.NewIterator(nil, nil)
+	iter := db.NewIterator(util.BytesPrefix([]byte(TaskTable)), nil)
 	list := []*DbTask{}
 	for iter.Next() {
 		key := iter.Key()
@@ -89,15 +95,15 @@ func DeleteScheduler(key string) {
 	s.Remove(key)
 }
 
-func (sch *Task) Save(md5 string) {
-	db.Put([]byte(md5), []byte(sch.toJson()), nil)
+func (sch *Task) Save(id string) {
+	db.Put([]byte(id), []byte(sch.toJson()), nil)
 }
 
-func (sch *Task) Run(md5 string) error {
-	fmt.Println("加入任务-->" + md5)
+func (sch *Task) Run(id string) error {
+	fmt.Println("加入任务-->" + id)
 	t, _ := time.ParseInLocation(DATE_FORMAT, sch.Time, time.Local)
-	j := gocron.NewJob(md5, sch.Every, sch.Unit, t)
-	j.Do(task, md5)
+	j := gocron.NewJob(id, sch.Every, sch.Unit, t)
+	j.Do(task, id)
 
 	s := gocron.GetScheduler()
 	s.Add(j)
@@ -118,14 +124,14 @@ func (sch *Task) toJson() string {
 // 	return time.Parse(time.RFC3339, sch.AtDate+"T"+sch.AtTime+"+00:00")
 // }
 
-func task(j *gocron.Job, md5 string) {
-	fmt.Println("Run task : " + md5)
-	value, _ := db.Get([]byte(md5), nil)
+func task(j *gocron.Job, id string) {
+	fmt.Println("Run task : " + id)
+	value, _ := db.Get([]byte(id), nil)
 	var task Task
 	_ = json.Unmarshal(value, &task)
 	task.Time = j.NextRun().Format(DATE_FORMAT)
 	task.LastRun = j.LastRun()
-	task.Save(md5)
+	task.Save(id)
 
 	fmt.Println("Value:" + task.toJson())
 }

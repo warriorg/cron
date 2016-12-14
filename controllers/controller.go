@@ -31,8 +31,8 @@ func SchedulerAdd(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 
 	hash := md5.Sum(body)
-	md5Str := hex.EncodeToString(hash[:])
-	fmt.Println("md5:" + md5Str + "\n body:" + string(body))
+	id := services.TaskTable + hex.EncodeToString(hash[:])
+	fmt.Println("md5:" + id + "\n body:" + string(body))
 
 	var task services.Task
 	err := json.Unmarshal(body, &task)
@@ -43,8 +43,8 @@ func SchedulerAdd(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(task)
 
-	task.Save(md5Str)
-	task.Run(md5Str)
+	task.Save(id)
+	task.Run(id)
 
 	w.Write([]byte("Hello world!"))
 }
