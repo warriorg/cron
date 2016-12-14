@@ -46,7 +46,7 @@ func TaskAdd(w http.ResponseWriter, r *http.Request) {
 	task.Save(id)
 	task.Run(id)
 
-	w.Write([]byte("Hello world!"))
+	w.Write([]byte(`{"success":200}`))
 }
 
 func TaskDel(w http.ResponseWriter, r *http.Request) {
