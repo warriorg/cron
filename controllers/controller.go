@@ -27,7 +27,7 @@ func Tasks(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, tplValues)
 }
 
-func SchedulerAdd(w http.ResponseWriter, r *http.Request) {
+func TaskAdd(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 
 	hash := md5.Sum(body)
@@ -49,7 +49,7 @@ func SchedulerAdd(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello world!"))
 }
 
-func SchedulerDel(w http.ResponseWriter, r *http.Request) {
+func TaskDel(w http.ResponseWriter, r *http.Request) {
 	sid := mux.Vars(r)["sid"]
 	services.DeleteScheduler(sid)
 	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
