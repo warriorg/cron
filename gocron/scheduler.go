@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -97,11 +98,15 @@ func (j *Job) scheduleNextRun() {
 		j.lastRun = time.Now()
 	}
 
+	if j.interval == 0 {
+		return
+	}
+
 	if j.period != 0 {
 		// translate all the units to the Seconds
 		j.nextRun = j.lastRun.Add(j.period * time.Second)
 	} else {
-		switch j.unit {
+		switch strings.ToLower(j.unit) {
 		case "second":
 			j.period = time.Duration(j.interval)
 			j.nextRun = j.lastRun.Add(j.period * time.Second)
