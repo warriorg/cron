@@ -11,7 +11,7 @@ func InitRoutes() *mux.Router {
 
 	router.HandleFunc("/hello", controllers.Hello).Methods("GET")
 	router.HandleFunc("/tasks", controllers.Tasks).Methods("GET")
-	router.HandleFunc("/task/add", controllers.TaskAdd).Methods("PUT")
+	router.HandleFunc("/task/add", controllers.TaskAdd).Methods("POST")
 	router.HandleFunc("/task/del/{sid}", controllers.TaskDel).Methods("GET")
 
 	return router

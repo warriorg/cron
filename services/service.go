@@ -2,6 +2,7 @@ package services
 
 import (
 	"cron/gocron"
+	"cron/lib"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,7 +20,6 @@ import (
 
 // 常量
 const (
-	DATE_FORMAT      = "2006-01-02 15:04"
 	TaskTable        = "task-"
 	TaskLogTable     = "tasklog-"
 	TaskHistoryTable = "taskhistory-"
@@ -28,9 +28,9 @@ const (
 // Task 精度支持到分钟
 type Task struct {
 	//2012-06-12 12:22
-	Time string `json:"time"`
+	Time lib.Timestamp `json:"time"`
 	//2012-06-12 12:22
-	EndTime string `json:"endTime"`
+	EndTime lib.Timestamp `json:"endTime"`
 	// 计数器
 	MaxCount uint64 `json:"maxCount"`
 
@@ -133,6 +133,7 @@ func (task *Task) Delete(id string) {
 
 // Save 保存任务
 func (task *Task) Save(id string) {
+	log.Println("保存", task.json())
 	db.Put([]byte(TaskTable+id), []byte(task.json()), nil)
 }
 
@@ -143,9 +144,8 @@ func (task *Task) SaveHistory(id string) {
 
 // Run 执行任务
 func (task *Task) Run(id string) error {
-	fmt.Println("加入任务-->" + task.json())
-	t, _ := time.ParseInLocation(DATE_FORMAT, task.Time, time.Local)
-	j := gocron.NewJob(id, task.Every, task.Unit, t)
+	log.Println("加入任务-->" + task.json())
+	j := gocron.NewJob(id, task.Every, task.Unit, task.Time.Time)
 	j.Do(taskRun, id)
 
 	s := gocron.GetScheduler()
@@ -204,8 +204,12 @@ func taskRun(j *gocron.Job, id string) {
 		s.Remove(id)
 		return
 	}
-	task.Time = j.NextRun().Format(DATE_FORMAT)
+
+	// task.Time = j.NextRun().Format(DATE_FORMAT)
+	nextRun := j.NextRun()
+	task.Time = lib.Timestamp{nextRun}
 	task.Save(id)
+	task.callback()
 
 	logJSON, _ := db.Get([]byte(TaskLogTable+id), nil)
 	var taskLog *TaskLog
@@ -217,9 +221,8 @@ func taskRun(j *gocron.Job, id string) {
 	taskLog.LastRun = j.LastRun()
 	taskLog.save(TaskLogTable + id)
 
-	if task.Unit == "" {
-
-		fmt.Println("Remove task : " + id)
+	if (task.EndTime.After(time.Unix(0, 0)) && time.Now().After(task.EndTime.Time)) || task.Unit == "" {
+		fmt.Println("Remove task : ", id, task.Time, task.EndTime)
 		s := gocron.GetScheduler()
 		s.Remove(id)
 		task.SaveHistory(id)

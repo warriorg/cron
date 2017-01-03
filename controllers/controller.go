@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -35,16 +34,20 @@ func TaskAdd(w http.ResponseWriter, r *http.Request) {
 
 	hash := md5.Sum(body)
 	id := hex.EncodeToString(hash[:])
-	fmt.Println("md5:" + id + "\n body:" + string(body))
+	log.Println("md5:" + id + " body:" + string(body))
 
-	var task services.Task
+	var task *services.Task
 	err := json.Unmarshal(body, &task)
 	if err != nil {
-		fmt.Println("参数异常")
-		log.Fatal(err)
-		panic(err)
+		log.Fatal("参数异常", err.Error())
+		w.Write([]byte(`{"success":1}`))
+		return
 	}
-	log.Println(task)
+
+	if task == nil {
+		w.Write([]byte(`{"success":1}`))
+		return
+	}
 
 	task.Save(id)
 	task.Run(id)

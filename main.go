@@ -28,5 +28,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	http.ListenAndServe(config.Port, n)
+	go func() {
+		http.ListenAndServe(config.Port, n)
+	}()
+	select {}
+
 }
