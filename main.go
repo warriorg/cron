@@ -3,7 +3,7 @@ package main
 import (
 	"cron/conf"
 	"cron/routers"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/codegangsta/negroni"
@@ -13,7 +13,7 @@ func main() {
 	// 必须要先声明defer，否则不能捕获到panic异常
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("统一接受错误：", err)
+			log.Println("统一接受错误：", err)
 		}
 	}()
 

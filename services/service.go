@@ -85,7 +85,7 @@ func Tasks() []*models.Task {
 	var task *models.Task
 	list, err := task.All()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return list
 }
@@ -130,7 +130,7 @@ func taskRun(j *gocron.Job, id string) {
 	if err != nil {
 		task.RunResult = err.Error()
 		//回调失败
-		log.Fatal(err.Error())
+		log.Println(err.Error())
 
 	}
 	task.Update()

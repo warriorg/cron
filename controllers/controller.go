@@ -31,7 +31,7 @@ func TaskAdd(w http.ResponseWriter, r *http.Request) {
 	err := services.TaskAdd(body)
 
 	if err != nil {
-		log.Fatal("参数异常", err.Error())
+		log.Println("参数异常", err.Error())
 		w.Write([]byte(`{"success":1}`))
 		return
 	}

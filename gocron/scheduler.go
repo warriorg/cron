@@ -60,12 +60,12 @@ func (j *Job) shouldRun() bool {
 }
 
 func (j *Job) run() {
-	fmt.Println("执行任务")
+	log.Println("run task")
 
 	f := reflect.ValueOf(j.funcs)
 	params := j.fparams
 	if len(params)+1 != f.Type().NumIn() {
-		log.Fatal("The number of param is not adapted.")
+		log.Println("The number of param is not adapted.")
 	}
 
 	in := make([]reflect.Value, len(params)+1)
