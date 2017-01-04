@@ -1,6 +1,6 @@
 #!/bin/bash
 
-releasePath="build/"
+releasePath="build/conf"
 
 if [ ! -d "$releasePath" ]; then
   echo "create" + $releasePath
