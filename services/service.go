@@ -3,29 +3,17 @@ package services
 import (
 	"cron/gocron"
 	"cron/lib"
+	"cron/models"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"strings"
 	"time"
-
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/util"
-)
-
-// TODO id md5码 key 前置 + id
-// 常量
-const (
-	TaskTable        = "task-"
-	TaskLogTable     = "tasklog-"
-	TaskHistoryTable = "taskhistory-"
 )
 
 // Task 精度支持到分钟
-type Task struct {
+type TaskTo struct {
 	//2012-06-12 12:22
 	Time lib.Timestamp `json:"time"`
 	//2012-06-12 12:22
@@ -47,67 +35,54 @@ type Task struct {
 	Header map[string]string `json:"header"`
 }
 
-// TaskLog 工作日志
-type TaskLog struct {
-	Count   int64     `json:"count"`
-	LastRun time.Time `json:"lastRun"`
-}
+func (to *TaskTo) toTask(md5 string) *models.Task {
+	task := &models.Task{}
+	task.Id = md5
+	task.Time = to.Time
+	task.EndTime = to.EndTime
+	task.MaxCount = to.MaxCount
+	task.Every = to.Every
+	task.Unit = to.Unit
+	task.URL = to.URL
+	task.Method = to.Method
+	task.Body = to.Body
+	task.Header = to.Header
 
-// DbTask 数据库存储的
-type DbTask struct {
-	Key     string
-	Task    *Task
-	TaskLog *TaskLog
+	return task
 }
-
-var db *leveldb.DB
 
 func init() {
-	_db, err := leveldb.OpenFile("data/db", nil)
-
-	if err != nil {
-		panic(err)
-	}
-	db = _db
-
 	s := gocron.GetScheduler()
 	s.Start()
 	initJob()
 }
 
 func initJob() {
-	iter := db.NewIterator(util.BytesPrefix([]byte(TaskTable)), nil)
-
-	for iter.Next() {
-		log.Println("load task key: %s, %s", string(iter.Key()[:]), string(iter.Value()[:]))
-		key := iter.Key()
-		task := TaskFromJSON(iter.Value())
-
-		log.Println("key:{} table:{}, trim:{}", string(key), TaskTable, strings.TrimPrefix(string(key[:]), TaskTable))
-		task.Run(strings.TrimPrefix(string(key[:]), TaskTable))
+	list := Tasks()
+	for _, task := range list {
+		joinTask(task)
 	}
-	iter.Release()
-	err := iter.Error()
+}
+
+func TaskAdd(body []byte) error {
+	hash := md5.Sum(body)
+	md5 := hex.EncodeToString(hash[:])
+	log.Println("md5:" + md5 + " body:" + string(body))
+	var to *TaskTo
+	err := json.Unmarshal(body, &to)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
+	task := to.toTask(md5)
+	task.Save()
+	joinTask(task)
+	return nil
 }
 
 // Tasks 列表
-func Tasks() []*DbTask {
-	iter := db.NewIterator(util.BytesPrefix([]byte(TaskTable)), nil)
-	list := []*DbTask{}
-	for iter.Next() {
-		key := iter.Key()
-		value := iter.Value()
-		dbTask := new(DbTask)
-		dbTask.Key = string(key[:])
-		dbTask.Task = TaskFromJSON(value)
-		list = append(list, dbTask)
-	}
-	iter.Release()
-	err := iter.Error()
+func Tasks() []*models.Task {
+	var task *models.Task
+	list, err := task.All()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -115,38 +90,17 @@ func Tasks() []*DbTask {
 }
 
 // DeleteScheduler 删除job
-func DeleteScheduler(key string) {
-	db.Delete([]byte(key), nil)
+func TaskDelete(id string) {
+	task := models.NewTaskById(id)
+	task.Delete()
 	s := gocron.GetScheduler()
-	s.Remove(key)
+	s.Remove(id)
 }
 
-func getTaskByID(id string) (task *Task) {
-	value, _ := db.Get([]byte(TaskTable+id), nil)
-	return TaskFromJSON(value)
-}
-
-// Delete 删除
-func (task *Task) Delete(id string) {
-	db.Delete([]byte(TaskTable+id), nil)
-}
-
-// Save 保存任务
-func (task *Task) Save(id string) {
-	log.Println("保存", task.json())
-	db.Put([]byte(TaskTable+id), []byte(task.json()), nil)
-}
-
-// SaveHistory 保存历史
-func (task *Task) SaveHistory(id string) {
-	db.Put([]byte(TaskHistoryTable+id), []byte(task.json()), nil)
-}
-
-// Run 执行任务
-func (task *Task) Run(id string) error {
-	log.Println("加入任务-->" + task.json())
-	j := gocron.NewJob(id, task.Every, task.Unit, task.Time.Time)
-	j.Do(taskRun, id)
+func joinTask(task *models.Task) error {
+	log.Println("加入任务-->" + task.Id)
+	j := gocron.NewJob(task.Id, task.Every, task.Unit, task.Time.Time)
+	j.Do(taskRun, task.Id)
 
 	s := gocron.GetScheduler()
 	s.Add(j)
@@ -154,54 +108,10 @@ func (task *Task) Run(id string) error {
 	return nil
 }
 
-func (task *Task) callback() (err error) {
-	if task.URL == "" {
-		log.Println("URL为空，中止callback")
-		return
-	}
-
-	if task.Method == "" {
-		task.Method = "GET"
-	}
-
-	client := &http.Client{}
-	req, _ := http.NewRequest(task.Method, task.URL, nil)
-	for key, value := range task.Header {
-		req.Header.Add(key, value)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return err
-	}
-
-	if result["success"].(float64) != 0 || result["data"] == nil {
-		log.Println("---------" + result["message"].(string))
-		return errors.New(result["message"].(string))
-	}
-	return nil
-}
-
-// json 转化为Json
-func (task *Task) json() string {
-	js, err := json.Marshal(task)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return string(js)
-}
-
 func taskRun(j *gocron.Job, id string) {
 	fmt.Println(" Run task : ", time.Now(), id)
 
-	task := getTaskByID(id)
+	task, err := models.FindById(id)
 	if task == nil {
 		fmt.Println("Task nil, Remove task : " + id)
 		s := gocron.GetScheduler()
@@ -212,48 +122,19 @@ func taskRun(j *gocron.Job, id string) {
 	// task.Time = j.NextRun().Format(DATE_FORMAT)
 	nextRun := j.NextRun()
 	task.Time = lib.Timestamp{nextRun}
-	task.Save(id)
-	err := task.callback()
+	task.LastRun = j.LastRun()
+	task.Count++
+	task.Save()
+	err = task.Callback()
 	if err != nil {
 		//回调失败
 		log.Fatal(err.Error())
 	}
 
-	logJSON, _ := db.Get([]byte(TaskLogTable+id), nil)
-	var taskLog *TaskLog
-	if logJSON == nil {
-		taskLog = &TaskLog{}
-	}
-	_ = json.Unmarshal(logJSON, &taskLog)
-	taskLog.Count++
-	taskLog.LastRun = j.LastRun()
-	taskLog.save(TaskLogTable + id)
-
 	if (task.EndTime.After(time.Unix(0, 0)) && time.Now().After(task.EndTime.Time)) || task.Unit == "" {
 		fmt.Println("Remove task : ", id, task.Time, task.EndTime)
 		s := gocron.GetScheduler()
 		s.Remove(id)
-		task.SaveHistory(id)
-		task.Delete(id)
+		task.Delete()
 	}
-}
-
-// TaskFromJSON json 反序列化
-func TaskFromJSON(value []byte) (task *Task) {
-	json.Unmarshal(value, &task)
-	return
-}
-
-func (taskLog *TaskLog) save(id string) {
-	db.Put([]byte(TaskLogTable+id), []byte(taskLog.json()), nil)
-}
-
-// json 转化为Json
-func (taskLog *TaskLog) json() string {
-	js, err := json.Marshal(taskLog)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return string(js)
 }

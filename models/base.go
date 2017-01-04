@@ -15,6 +15,10 @@ func CheckErr(err error) {
 
 var db *mgo.Database
 
+func init() {
+	SetupDB()
+}
+
 func SetupDB() *mgo.Database {
 	config := conf.ReadConfig()
 	sess, err := mgo.Dial(config.DB.URL)

@@ -36,6 +36,22 @@ func (j *JSONTest) String() {
 	log.Println("String ", j.Bone)
 }
 
+func Test_Make(t *testing.T) {
+	list := make([]int, 5, 8)
+	println(list)
+	list = append(list, 1)
+	println(list)
+	list = append(list, 1)
+	println(list)
+	list = append(list, 1)
+	println(list)
+	list = append(list, 1)
+	println(list)
+	list = append(list, 1)
+	println(list)
+
+}
+
 func Test_JSON(t *testing.T) {
 
 	// jt := JSONTest{Current: Timestamp{time.Now()}, Bone: "bbbb"}
