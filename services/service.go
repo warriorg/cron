@@ -84,7 +84,8 @@ func initJob() {
 		key := iter.Key()
 		task := TaskFromJSON(iter.Value())
 
-		task.Run(strings.TrimLeft(string(key[:]), TaskTable))
+		log.Println("key:{} table:{}, trim:{}", string(key), TaskTable, strings.TrimPrefix(string(key[:]), TaskTable))
+		task.Run(strings.TrimPrefix(string(key[:]), TaskTable))
 	}
 	iter.Release()
 	err := iter.Error()
@@ -169,7 +170,10 @@ func (task *Task) callback() (err error) {
 		req.Header.Add(key, value)
 	}
 
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	var result map[string]interface{}
