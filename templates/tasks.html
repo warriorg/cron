@@ -22,7 +22,9 @@
             {{range $value := .tasks}}
             <tr>
               <td>{{.Key}}</td>
-              <td>{{.Value.Unit}}</td>
+              <td>{{.Task.Unit}}</td>
+              <td>{{.Task.Time}}</td>
+              <td>{{.Task.URL}}</td>
 
               <td><a href="/task/del/{{.Key}}">删除</a></td>
             </tr>
