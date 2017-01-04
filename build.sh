@@ -12,7 +12,7 @@ GOOS=windows GOARCH=386 go build -o build/cron.exe main.go
 echo "buid done"
 cp -R templates build/
 echo "copy config"
-cp config.yaml build/
+cp conf/config.yaml build/conf/config.yaml
 echo "copy templates complete"
 cp -R public build/
 echo "copy static complete"

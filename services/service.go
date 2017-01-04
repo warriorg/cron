@@ -17,7 +17,6 @@ import (
 )
 
 // TODO id md5码 key 前置 + id
-
 // 常量
 const (
 	TaskTable        = "task-"
@@ -45,7 +44,7 @@ type Task struct {
 	// 回传的数据
 	Body string `json:"body"`
 	// Header 中回传的数据
-	Header map[string]string
+	Header map[string]string `json:"header"`
 }
 
 // TaskLog 工作日志
@@ -157,7 +156,8 @@ func (task *Task) Run(id string) error {
 
 func (task *Task) callback() (err error) {
 	if task.URL == "" {
-		return errors.New("URL 不能为空")
+		log.Println("URL为空，中止callback")
+		return
 	}
 
 	if task.Method == "" {
@@ -213,7 +213,11 @@ func taskRun(j *gocron.Job, id string) {
 	nextRun := j.NextRun()
 	task.Time = lib.Timestamp{nextRun}
 	task.Save(id)
-	task.callback()
+	err := task.callback()
+	if err != nil {
+		//回调失败
+		log.Fatal(err.Error())
+	}
 
 	logJSON, _ := db.Get([]byte(TaskLogTable+id), nil)
 	var taskLog *TaskLog
