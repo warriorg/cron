@@ -99,7 +99,7 @@ func TaskDelete(id string) {
 }
 
 func joinTask(task *models.Task) error {
-	log.Println("加入任务-->" + task.Id)
+	log.Println("join task --> " + task.Id)
 	j := gocron.NewJob(task.Id, task.Every, task.Unit, task.Time.Time)
 	j.Do(taskRun, task.Id)
 
@@ -110,11 +110,11 @@ func joinTask(task *models.Task) error {
 }
 
 func taskRun(j *gocron.Job, id string) {
-	fmt.Println(" Run task : ", time.Now(), id)
+	fmt.Println("run task: ", time.Now(), id)
 
 	task, err := models.FindById(id)
 	if task == nil {
-		fmt.Println("Task nil, Remove task : " + id)
+		log.Println("task nil, remove task : " + id)
 		s := gocron.GetScheduler()
 		s.Remove(id)
 		return
@@ -125,15 +125,19 @@ func taskRun(j *gocron.Job, id string) {
 	task.Time = lib.Timestamp{nextRun}
 	task.LastRun = j.LastRun()
 	task.Count++
-	task.Update()
+	task.RunResult = "success"
 	err = task.Callback()
 	if err != nil {
+		task.RunResult = err.Error()
 		//回调失败
 		log.Fatal(err.Error())
+
 	}
+	task.Update()
+	models.SaveHistory(task)
 
 	if (task.EndTime.After(time.Unix(0, 0)) && time.Now().After(task.EndTime.Time)) || task.Unit == "" {
-		fmt.Println("Remove task : ", id, task.Time, task.EndTime)
+		log.Println("remove task : ", id, task.Time, task.EndTime)
 		s := gocron.GetScheduler()
 		s.Remove(id)
 		task.Delete()

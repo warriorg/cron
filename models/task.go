@@ -8,10 +8,13 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
-	CTasks = "tasks"
+	CTasks         = "tasks"
+	CTaskHistories = "task_histories"
 )
 
 // Task 精度支持到分钟
@@ -40,6 +43,8 @@ type Task struct {
 	Count int64 `json:"count"`
 
 	LastRun time.Time `json:"lastRun"`
+
+	RunResult string `runResult`
 }
 
 func NewTaskById(id string) *Task {
@@ -92,7 +97,7 @@ func (task *Task) Delete() error {
 
 func (task *Task) Callback() (err error) {
 	if task.URL == "" {
-		log.Println("URL为空，中止callback")
+		log.Println("URL nil，stop callback")
 		return
 	}
 
@@ -122,4 +127,18 @@ func (task *Task) Callback() (err error) {
 		return errors.New(result["message"].(string))
 	}
 	return nil
+}
+
+func SaveHistory(task *Task) {
+	hist := &TaskHistory{}
+	hist.Task = task
+	hist.RunTime = time.Now()
+	err := db.C(CTaskHistories).Insert(hist)
+	CheckErr(err)
+}
+
+type TaskHistory struct {
+	*Task
+	Id      bson.ObjectId `bson:"_id,omitempty"`
+	RunTime time.Time
 }
