@@ -75,6 +75,7 @@ func TaskAdd(body []byte) error {
 	}
 	task := to.toTask(md5)
 	task.Save()
+
 	joinTask(task)
 	return nil
 }
@@ -124,7 +125,7 @@ func taskRun(j *gocron.Job, id string) {
 	task.Time = lib.Timestamp{nextRun}
 	task.LastRun = j.LastRun()
 	task.Count++
-	task.Save()
+	task.Update()
 	err = task.Callback()
 	if err != nil {
 		//回调失败

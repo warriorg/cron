@@ -15,18 +15,19 @@
             <tr>
               <th width="200">md5</th>
               <th width="100">单位</th>
+              <th width="100">上次执行</th>
               <th>下次</th>
               <th>回调</th>
               <th>操作</th>
             </tr>
             {{range $value := .tasks}}
             <tr>
-              <td>{{.Key}}</td>
-              <td>{{.Task.Unit}}</td>
-              <td>{{.Task.Time}}</td>
-              <td>{{.Task.URL}}</td>
-
-              <td><a href="/task/del/{{.Key}}">删除</a></td>
+              <td>{{.Id}}</td>
+              <td>{{.Unit}}</td>
+              <td>{{.LastRun}}</td>
+              <td>{{.Time}}</td>
+              <td>{{.URL}}</td>
+              <td><a href="/task/del/{{.Id}}">删除</a></td>
             </tr>
             {{end}}
           </table>

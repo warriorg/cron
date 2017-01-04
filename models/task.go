@@ -74,6 +74,14 @@ func (task *Task) Save() error {
 	return err
 }
 
+func (task *Task) Update() error {
+	if task == nil {
+		return errors.New("task 不能为空")
+	}
+	err := db.C(CTasks).UpdateId(task.Id, task)
+	return err
+}
+
 func (task *Task) Delete() error {
 	if task == nil {
 		return errors.New("task 不能为空")
