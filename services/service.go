@@ -113,9 +113,8 @@ func taskRun(j *gocron.Job, id string) {
 
 	task, err := models.FindById(id)
 	if task == nil {
-		log.Println("task nil, remove task : ", task)
-		s := gocron.GetScheduler()
-		s.Remove(id)
+		log.Println("task nil, remove job : ", j)
+		j.Delete()
 		return
 	}
 
@@ -134,9 +133,8 @@ func taskRun(j *gocron.Job, id string) {
 
 	models.SaveHistory(task)
 	if (task.EndTime.After(time.Unix(0, 0)) && time.Now().After(task.EndTime.Time)) || task.Unit == "" {
-		log.Println("remove task : ", id, task.Time, task.EndTime)
-		s := gocron.GetScheduler()
-		s.Remove(id)
+		log.Println("remove task : ", task)
+		j.Delete()
 		task.Delete()
 	} else {
 		task.Update()

@@ -15,3 +15,9 @@ time
 
 unit type
 >minute, hour, day, week, month, year
+
+
+next:
+  增加回调消息错误时自动重试功能
+  增加最多调用册书限制
+  集成日志

@@ -30,6 +30,7 @@ type Job struct {
 	funcs interface{}
 	// Map for function and  params of function
 	fparams []interface{}
+	delete  bool
 }
 
 func NewJob(id string, interval uint64, unit string, time time.Time) *Job {
@@ -39,6 +40,7 @@ func NewJob(id string, interval uint64, unit string, time time.Time) *Job {
 		unit:     unit,
 		nextRun:  time,
 		runing:   false,
+		delete:   false,
 	}
 }
 
@@ -55,9 +57,13 @@ func (j *Job) LastRun() time.Time {
 	return j.lastRun
 }
 
+func (j *Job) Delete() {
+	j.delete = true
+}
+
 func (j *Job) shouldRun() bool {
-	// log.Println(time.Now())
-	// log.Println(j.nextRun)
+	// log.Println("当前时间", time.Now())
+	// log.Println("下次执行时间", j.nextRun)
 	return time.Now().After(j.nextRun)
 }
 
@@ -194,7 +200,16 @@ func (s *Scheduler) Remove(jobId string) {
 	} else {
 		s.jobs = s.jobs[:index]
 	}
+}
 
+func (s *Scheduler) CleanDelJob() {
+	jobs := make([]*Job, 0)
+	for _, job := range s.jobs {
+		if !job.delete {
+			jobs = append(jobs, job)
+		}
+	}
+	s.jobs = jobs
 }
 
 func (s *Scheduler) Index(jobId string) int {
@@ -236,6 +251,7 @@ func (s *Scheduler) Start() chan bool {
 
 // Run all the jobs that are scheduled to run.
 func (s *Scheduler) RunPending() {
+	s.CleanDelJob()
 	for _, j := range s.jobs {
 		if !j.runing && j.shouldRun() {
 			go j.run()
