@@ -38,7 +38,7 @@ func NewJob(id string, interval uint64, unit string, time time.Time) *Job {
 		jobId:    id,
 		unit:     unit,
 		nextRun:  time,
-		runing:  false
+		runing:   false,
 	}
 }
 
@@ -80,7 +80,7 @@ func (j *Job) run() {
 	j.lastRun = time.Now()
 	j.scheduleNextRun()
 	f.Call(in)
-	f.runing = false
+	j.runing = false
 }
 
 func (j *Job) Do(jobFun interface{}, params ...interface{}) {

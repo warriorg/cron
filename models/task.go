@@ -138,6 +138,11 @@ func SaveHistory(task *Task) {
 	CheckErr(err)
 }
 
+func (task *Task) String() string {
+	value, _ := json.Marshal(task)
+	return string(value)
+}
+
 type TaskHistory struct {
 	*Task
 	Id      bson.ObjectId `bson:"_id,omitempty"`

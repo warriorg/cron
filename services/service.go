@@ -113,7 +113,7 @@ func taskRun(j *gocron.Job, id string) {
 
 	task, err := models.FindById(id)
 	if task == nil {
-		log.Println("task nil, remove task : " + id)
+		log.Println("task nil, remove task : ", task)
 		s := gocron.GetScheduler()
 		s.Remove(id)
 		return
@@ -129,7 +129,7 @@ func taskRun(j *gocron.Job, id string) {
 	if err != nil {
 		task.RunResult = err.Error()
 		//回调失败
-		log.Println("回调错误：", err.Error())
+		log.Println("回调错误：", err.Error(), "任务：", task)
 	}
 
 	models.SaveHistory(task)
