@@ -217,6 +217,7 @@ func (s *Scheduler) Start() chan bool {
 
 	go func() {
 		for {
+			runtime.Gosched()
 			select {
 			case <-ticker.C:
 				s.RunPending()

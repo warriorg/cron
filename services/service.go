@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 )
@@ -110,7 +109,7 @@ func joinTask(task *models.Task) error {
 }
 
 func taskRun(j *gocron.Job, id string) {
-	fmt.Println("run task: ", time.Now(), id)
+	log.Println("run task: ", time.Now(), id)
 
 	task, err := models.FindById(id)
 	if task == nil {
@@ -130,16 +129,17 @@ func taskRun(j *gocron.Job, id string) {
 	if err != nil {
 		task.RunResult = err.Error()
 		//回调失败
-		log.Println(err.Error())
-
+		log.Println("回调错误：", err.Error())
 	}
-	task.Update()
-	models.SaveHistory(task)
 
+	models.SaveHistory(task)
 	if (task.EndTime.After(time.Unix(0, 0)) && time.Now().After(task.EndTime.Time)) || task.Unit == "" {
 		log.Println("remove task : ", id, task.Time, task.EndTime)
 		s := gocron.GetScheduler()
 		s.Remove(id)
 		task.Delete()
+	} else {
+		task.Update()
 	}
+
 }

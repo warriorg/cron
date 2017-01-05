@@ -119,6 +119,7 @@ func (task *Task) Callback() (err error) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
+		log.Println("调用 ", task.URL, " 返回：", string(body))
 		return err
 	}
 
