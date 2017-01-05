@@ -23,8 +23,9 @@ type Job struct {
 	// cache the period between last an next run
 	period time.Duration
 
-	unit string
+	runing bool
 
+	unit string
 	// Map for the function task store
 	funcs interface{}
 	// Map for function and  params of function
@@ -37,6 +38,7 @@ func NewJob(id string, interval uint64, unit string, time time.Time) *Job {
 		jobId:    id,
 		unit:     unit,
 		nextRun:  time,
+		runing:  false
 	}
 }
 
@@ -60,6 +62,7 @@ func (j *Job) shouldRun() bool {
 }
 
 func (j *Job) run() {
+	j.runing = true
 	log.Println("run task")
 
 	f := reflect.ValueOf(j.funcs)
@@ -77,6 +80,7 @@ func (j *Job) run() {
 	j.lastRun = time.Now()
 	j.scheduleNextRun()
 	f.Call(in)
+	f.runing = false
 }
 
 func (j *Job) Do(jobFun interface{}, params ...interface{}) {
@@ -233,7 +237,7 @@ func (s *Scheduler) Start() chan bool {
 // Run all the jobs that are scheduled to run.
 func (s *Scheduler) RunPending() {
 	for _, j := range s.jobs {
-		if j.shouldRun() {
+		if !j.runing && j.shouldRun() {
 			go j.run()
 		}
 	}
