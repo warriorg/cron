@@ -168,7 +168,7 @@ func (j *Job) scheduleNextRun() {
 }
 
 type Scheduler struct {
-	m    sync.Mutex
+	m    *sync.Mutex
 	jobs []*Job
 }
 
@@ -177,7 +177,10 @@ var once sync.Once
 
 func GetScheduler() *Scheduler {
 	once.Do(func() {
-		instance = &Scheduler{jobs: []*Job{}}
+		instance = &Scheduler{
+			m:    &sync.Mutex{},
+			jobs: []*Job{},
+		}
 	})
 	return instance
 }
