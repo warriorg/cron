@@ -36,6 +36,21 @@ func (j *JSONTest) String() {
 	log.Println("String ", j.Bone)
 }
 
+func Test_List(t *testing.T) {
+	println("test list")
+	var list []int
+	list = append(list, 1)
+	println(list, len(list), cap(list))
+	list = list[:0]
+	println(list, len(list), cap(list))
+	list = append(list, 1)
+	println(list, len(list), cap(list))
+	list = nil
+	println(list, len(list), cap(list))
+	list = append(list, 2)
+	println(list, len(list), cap(list))
+}
+
 func Test_Make(t *testing.T) {
 	list := make([]int, 5, 8)
 	println(list)

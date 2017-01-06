@@ -2,6 +2,7 @@ package main
 
 import (
 	"cron/conf"
+	"cron/models"
 	"cron/routers"
 	"log"
 	"net/http"
@@ -20,6 +21,8 @@ func main() {
 			log.Println("统一接受错误：", err)
 		}
 	}()
+
+	defer models.CloseDB()
 
 	router := routers.InitRoutes()
 	n := negroni.Classic()

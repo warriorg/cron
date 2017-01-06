@@ -13,6 +13,7 @@ func CheckErr(err error) {
 	}
 }
 
+var sess *mgo.Session
 var db *mgo.Database
 
 func init() {
@@ -24,7 +25,10 @@ func SetupDB() *mgo.Database {
 	sess, err := mgo.Dial(config.DB.URL)
 	CheckErr(err)
 	sess.SetSafe(&mgo.Safe{})
-
 	db = sess.DB("cron")
 	return db
+}
+
+func CloseDB() {
+	sess.Close()
 }

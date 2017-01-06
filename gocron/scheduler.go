@@ -168,8 +168,9 @@ func (j *Job) scheduleNextRun() {
 }
 
 type Scheduler struct {
-	m    *sync.Mutex
-	jobs []*Job
+	m       *sync.Mutex
+	jobs    []*Job
+	tmpJobs []*Job
 }
 
 var instance *Scheduler
@@ -186,26 +187,30 @@ func GetScheduler() *Scheduler {
 }
 
 func (s *Scheduler) Add(j *Job) {
+	s.m.Lock()
+	defer s.m.Unlock()
 	if s.GetJob(j.jobId) != nil {
 		log.Println("任务已存在<-->" + j.jobId)
 		return
 	}
 
-	s.m.Lock()
-	s.jobs = append(s.jobs, j)
-	s.m.Unlock()
+	s.tmpJobs = append(s.tmpJobs, j)
 }
 
-func (s *Scheduler) CleanDelJob() {
-	s.m.Lock()
+func (s *Scheduler) cleanUpJob() {
 	jobs := make([]*Job, 0)
 	for _, job := range s.jobs {
 		if !job.delete {
 			jobs = append(jobs, job)
 		}
 	}
+	if len(s.tmpJobs) > 0 {
+		s.m.Lock()
+		jobs = append(jobs, s.tmpJobs...)
+		s.tmpJobs = nil
+		s.m.Unlock()
+	}
 	s.jobs = jobs
-	s.m.Unlock()
 }
 
 func (s *Scheduler) index(jobId string) int {
@@ -218,7 +223,12 @@ func (s *Scheduler) index(jobId string) int {
 }
 
 func (s *Scheduler) GetJob(jobId string) (job *Job) {
-	for _, job = range s.jobs {
+	jobs := s.jobs
+	if len(s.tmpJobs) > 0 {
+		jobs = append(jobs, s.tmpJobs...)
+	}
+
+	for _, job = range jobs {
 		if job.jobId == jobId {
 			return
 		}
@@ -247,7 +257,7 @@ func (s *Scheduler) Start() chan bool {
 
 // Run all the jobs that are scheduled to run.
 func (s *Scheduler) runPending() {
-	s.CleanDelJob()
+	s.cleanUpJob()
 	for _, j := range s.jobs {
 		if !j.runing && j.shouldRun() {
 			go j.run()
