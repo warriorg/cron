@@ -168,6 +168,7 @@ func (j *Job) scheduleNextRun() {
 }
 
 type Scheduler struct {
+	m    sync.Mutex
 	jobs []*Job
 }
 
@@ -176,7 +177,7 @@ var once sync.Once
 
 func GetScheduler() *Scheduler {
 	once.Do(func() {
-		instance = &Scheduler{[]*Job{}}
+		instance = &Scheduler{[]*Job{}, []*Job{}}
 	})
 	return instance
 }
@@ -187,22 +188,13 @@ func (s *Scheduler) Add(j *Job) {
 		return
 	}
 
+	s.m.Lock()
 	s.jobs = append(s.jobs, j)
-}
-
-func (s *Scheduler) Remove(jobId string) {
-	index := s.Index(jobId)
-	if index < 0 {
-		return
-	}
-	if len(s.jobs) < index+1 {
-		s.jobs = append(s.jobs[:index], s.jobs[index+1:]...)
-	} else {
-		s.jobs = s.jobs[:index]
-	}
+	s.m.Unlock()
 }
 
 func (s *Scheduler) CleanDelJob() {
+	s.m.Lock()
 	jobs := make([]*Job, 0)
 	for _, job := range s.jobs {
 		if !job.delete {
@@ -210,9 +202,10 @@ func (s *Scheduler) CleanDelJob() {
 		}
 	}
 	s.jobs = jobs
+	s.m.Unlock()
 }
 
-func (s *Scheduler) Index(jobId string) int {
+func (s *Scheduler) index(jobId string) int {
 	for index, job := range s.jobs {
 		if job.jobId == jobId {
 			return index
@@ -239,7 +232,7 @@ func (s *Scheduler) Start() chan bool {
 			runtime.Gosched()
 			select {
 			case <-ticker.C:
-				s.RunPending()
+				s.runPending()
 			case <-stopped:
 				return
 			}
@@ -250,7 +243,7 @@ func (s *Scheduler) Start() chan bool {
 }
 
 // Run all the jobs that are scheduled to run.
-func (s *Scheduler) RunPending() {
+func (s *Scheduler) runPending() {
 	s.CleanDelJob()
 	for _, j := range s.jobs {
 		if !j.runing && j.shouldRun() {

@@ -94,7 +94,8 @@ func TaskDelete(id string) {
 	task := models.NewTaskById(id)
 	task.Delete()
 	s := gocron.GetScheduler()
-	s.Remove(id)
+	job := s.GetJob(id)
+	job.Delete()
 }
 
 func joinTask(task *models.Task) error {
