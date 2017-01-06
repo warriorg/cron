@@ -177,7 +177,7 @@ var once sync.Once
 
 func GetScheduler() *Scheduler {
 	once.Do(func() {
-		instance = &Scheduler{[]*Job{}, []*Job{}}
+		instance = &Scheduler{jobs: []*Job{}}
 	})
 	return instance
 }
