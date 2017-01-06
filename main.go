@@ -26,9 +26,9 @@ func main() {
 	n.UseHandler(router)
 
 	config := conf.ReadConfig()
-	go func() {
-		http.ListenAndServe(config.Port, n)
-	}()
-	select {}
+	// go func() {
+	http.ListenAndServe(config.Port, n)
+	// }()
+	// select {}
 
 }
