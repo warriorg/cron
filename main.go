@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"runtime"
-
-	"github.com/codegangsta/negroni"
 )
 
 func main() {
@@ -24,14 +22,14 @@ func main() {
 
 	defer models.CloseDB()
 
-	router := routers.InitRoutes()
-	n := negroni.Classic()
-	n.UseHandler(router)
+	routers.SetupRoutes()
+	// n := negroni.Classic()
+	// n.UseHandler(router)
 
 	config := conf.ReadConfig()
-	// go func() {
-	http.ListenAndServe(config.Port, n)
-	// }()
-	// select {}
+	go func() {
+		log.Fatalln(http.ListenAndServe(config.Port, nil))
+	}()
+	select {}
 
 }
