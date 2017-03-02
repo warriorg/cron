@@ -21,14 +21,14 @@ func main() {
 	}()
 
 	defer models.CloseDB()
-
+ 
 	routers.SetupRoutes()
 	// n := negroni.Classic()
-	// n.UseHandler(router)
+	// n.UseHandler(router
 
 	config := conf.ReadConfig()
 	go func() {
-		log.Fatalln(http.ListenAndServe(config.Port, nil))
+		log.Println(http.ListenAndServe(config.Port, nil))
 	}()
 	select {}
 

@@ -58,6 +58,7 @@ func (j *Job) LastRun() time.Time {
 }
 
 func (j *Job) Delete() {
+	log.Println("标记删除", j.jobId)
 	j.delete = true
 }
 
@@ -189,12 +190,20 @@ func GetScheduler() *Scheduler {
 func (s *Scheduler) Add(j *Job) {
 	s.m.Lock()
 	defer s.m.Unlock()
-	if s.GetJob(j.jobId) != nil {
+	if s.getJob(j.jobId) != nil {
 		log.Println("任务已存在<-->" + j.jobId)
 		return
 	}
 
 	s.tmpJobs = append(s.tmpJobs, j)
+}
+
+func (s *Scheduler) DeleteJobByID(id string) {
+	for _, job := range s.jobs {
+		if job.jobId == id {
+			job.Delete()
+		}
+	}
 }
 
 func (s *Scheduler) cleanUpJob() {
@@ -207,7 +216,7 @@ func (s *Scheduler) cleanUpJob() {
 	if len(s.tmpJobs) > 0 {
 		s.m.Lock()
 		jobs = append(jobs, s.tmpJobs...)
-		s.tmpJobs = nil
+		s.tmpJobs = s.tmpJobs[:0]
 		s.m.Unlock()
 	}
 	s.jobs = jobs
@@ -222,7 +231,7 @@ func (s *Scheduler) index(jobId string) int {
 	return -1
 }
 
-func (s *Scheduler) GetJob(jobId string) (job *Job) {
+func (s *Scheduler) getJob(jobId string) (job *Job) {
 	jobs := s.jobs
 	if len(s.tmpJobs) > 0 {
 		jobs = append(jobs, s.tmpJobs...)

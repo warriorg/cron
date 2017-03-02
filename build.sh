@@ -3,7 +3,7 @@
 releasePath="build/conf"
 
 if [ ! -d "$releasePath" ]; then
-  echo "create" + $releasePath
+  echo "create " + $releasePath
   mkdir -p $releasePath
 fi
 

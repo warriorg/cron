@@ -39,6 +39,7 @@ func TaskAdd(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"success":0}`))
 }
 
+// TaskDel 删除
 func TaskDel(w http.ResponseWriter, r *http.Request) {
 	sid := mux.Vars(r)["sid"]
 	services.TaskDelete(sid)

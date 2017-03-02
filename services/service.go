@@ -94,8 +94,7 @@ func TaskDelete(id string) {
 	task := models.NewTaskById(id)
 	task.Delete()
 	s := gocron.GetScheduler()
-	job := s.GetJob(id)
-	job.Delete()
+	s.DeleteJobByID(id)
 }
 
 func joinTask(task *models.Task) error {
@@ -118,6 +117,8 @@ func taskRun(j *gocron.Job, id string) {
 		j.Delete()
 		return
 	}
+
+	time.Sleep(20 * time.Second)
 
 	// task.Time = j.NextRun().Format(DATE_FORMAT)
 	nextRun := j.NextRun()
