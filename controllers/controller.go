@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // Index 检查
@@ -52,8 +54,8 @@ func TaskAdd(w http.ResponseWriter, r *http.Request) {
 
 // TaskDel 删除
 func TaskDel(w http.ResponseWriter, r *http.Request) {
-	// sid := mux.Vars(r)["sid"]
-	// services.TaskDelete(sid)
+	sid := mux.Vars(r)["sid"]
+	services.TaskDelete(sid)
 	switch r.Header.Get("Accept") {
 	case "application/json":
 		w.Write([]byte(`{"success":0}`))
