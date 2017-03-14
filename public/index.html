@@ -29,6 +29,10 @@
       </table>
     </div>
     <script>
+    var GET_HEADER = {
+      method:"GET",
+      headers:{"Accept":"application/json"}
+    }
     var app = new Vue({
       el:'#app',
       data:{
@@ -36,22 +40,16 @@
       },
       methods: {
         tasks: function() {
-          fetch('/tasks', {
-            method:"GET",
-            headers:{"Accept":"application/json"}
-          }).then(function(response) {
-              return response.json()
-          }).then(json => {
-              this.taskList = json;
-          }).catch(error => {
-              console.log(error);
-          })
+          fetch('/tasks', GET_HEADER)
+          .then(function(response) {
+              return response.json() })
+          .then(json => {
+              this.taskList = json; })
+          .catch(error => {
+              console.log(error); })
         },
         taskDel: function(task) {
-          fetch('task/del/' + task.id, {
-            method:"GET",
-            headers:{"Accept":"application/json"}
-          })
+          fetch('task/del/' + task.id, GET_HEADER)
           .then(resp => resp.json())
           .then(json => json["success"] === 0)
           .then(success => {
