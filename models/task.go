@@ -19,7 +19,7 @@ const (
 
 // Task 精度支持到分钟
 type Task struct {
-	Id string `bson:"_id"`
+	Id string `bson:"_id" json:"id"`
 	//2012-06-12 12:22
 	Time lib.Timestamp `json:"time"`
 	//2012-06-12 12:22

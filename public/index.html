@@ -1,0 +1,69 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <link rel="stylesheet" href="/styles/main.css">
+    <title>任务列表</title>
+  </head>
+  <body>
+    <div id="app">
+      <table>
+        <tr>
+          <th width="200">id</th>
+          <th width="100">单位</th>
+          <th width="100">上次执行</th>
+          <th>结果</th>
+          <th>下次</th>
+          <th>回调</th>
+          <th>操作</th>
+        </tr>
+        <tr v-for="task in taskList">
+          <td>{{task.id}}</td>
+          <td>{{task.unit}}</td>
+          <td>{{task.lastRun}}</td>
+          <td>{{task.runResult}}</td>
+          <td>{{task.time}}</td>
+          <td>{{task.url}}</td>
+          <td><a v-on:click="taskDel(task)">删除</a></td>
+        </tr>
+      </table>
+    </div>
+    <script>
+    var app = new Vue({
+      el:'#app',
+      data:{
+        taskList:null
+      },
+      methods: {
+        tasks: function() {
+          fetch('/tasks', {
+            method:"GET",
+            headers:{"Accept":"application/json"}
+          }).then(function(response) {
+              return response.json()
+          }).then(json => {
+              this.taskList = json;
+          }).catch(error => {
+              console.log(error);
+          })
+        },
+        taskDel: function(task) {
+          fetch('task/del/' + task.id, {
+            method:"GET",
+            headers:{"Accept":"application/json"}
+          })
+          .then(resp => resp.json())
+          .then(json => json["success"] === 0)
+          .then(success => {
+            this.taskList.splice(this.taskList.findIndex((t) => (t.id === task.id), 1));
+          })
+          .catch(error => {
+              console.log(error);
+          })
+        }
+      }
+    });
+    app.tasks();
+    </script>
+  </body>
+</html>
