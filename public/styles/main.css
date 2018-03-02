@@ -23,6 +23,11 @@ button {
   border-radius: 4px;
 }
 
+input, select{
+  height: 28px;
+  width: 100%;
+}
+
 .button-primary {
   color: #fff;
   background-color: #409eff;
@@ -55,6 +60,26 @@ button {
   box-sizing: border-box;
   width: 50%;
   padding: 20px;
+}
+
+.cron-form-item {
+  margin-bottom: 12px;
+}
+
+.cron-form-item label {
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+
+.cron-dialog-footer {
+  padding: 5px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cron-dialog-footer button {
+  margin-left: 15px;
 }
 
 table {

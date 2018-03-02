@@ -8,7 +8,7 @@
   <body>
     <div id="app">
       <div class="toolbar">
-        <button class="button-primary">新增</button>
+        <button class="button-primary" @click="handleAdd">新增</button>
       </div>
       <table>
         <tr>
@@ -30,20 +30,32 @@
           <td><a v-on:click="taskDel(task)">删除</a></td>
         </tr>
       </table>
-      <div class="cron-dialog-wrapper">
+      <div class="cron-dialog-wrapper" :style="showAdd()">
         <div class="cron-dialog">
-          <div>
-            <label>周期</label>
-            <select>
+          <div class="cron-form-item">
+            <label>触发周期</label>
+            <input v-model.number="formData.every" />
+          </div>
+          <div class="cron-form-item">
+            <label>触发单位</label>
+            <select v-model="formData.unit">
               <option v-for="item in units" :key="item">{{item}}</option>
             </select>
           </div>
-          <div>
-            <label>回掉地址</label>
-            <input />
+          <div class="cron-form-item">
+            <label>请求方式</label>
+            <select v-model="formData.method">
+              <option v-for="item in methods" :key="item">{{item}}</option>
+            </select>
           </div>
-
-
+          <div class="cron-form-item">
+            <label>回掉地址</label>
+            <input v-model="formData.url" />
+          </div>
+          <div class="cron-dialog-footer">
+            <button class="button-primary" @click="handleSave">提交</button>
+            <button @click="handleCancel">取消</button>
+          </div>
         </div>
       </div>
     </div>
@@ -56,6 +68,12 @@
       el:'#app',
       data:{
         units: ['Minute', 'Hour', 'Day', 'Week', 'Month', 'Year'],
+        methods: ['GET', "POST", "PUT", "DELETE"],
+        formData: {
+          unit: 'Minute',
+          method: 'GET'
+        },
+        addForm: false,
         taskList:null
       },
       methods: {
@@ -67,6 +85,36 @@
               this.taskList = json; })
           .catch(error => {
               console.log(error); })
+        },
+        showAdd () {
+          if (this.addForm) return ''
+          return 'display: none;'
+        },
+        handleAdd () {
+          this.addForm = true;
+        },
+        handleSave () {
+          fetch('task/add', {
+            method: 'POST', // or 'PUT'
+            body: JSON.stringify(this.formData),
+            headers: new Headers({
+              'Content-Type': 'application/json'
+            })
+          })
+          .then(resp => resp.json())
+          .then(json => json["success"] === 0)
+          .then(success => {
+            this.addForm = false
+            alert('提交成功')
+            this.tasks()
+          })
+          .catch(error => {
+            alert('提交是吧')
+            console.log(error);
+          })
+        },
+        handleCancel () {
+          this.addForm = false;
         },
         taskDel: function(task) {
           fetch('task/del/' + task.id, GET_HEADER)
