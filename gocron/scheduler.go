@@ -245,6 +245,7 @@ func (s *Scheduler) getJob(jobId string) (job *Job) {
 	return nil
 }
 
+// Start start
 func (s *Scheduler) Start() chan bool {
 	stopped := make(chan bool, 1)
 	ticker := time.NewTicker(1 * time.Second)

@@ -7,6 +7,9 @@
   </head>
   <body>
     <div id="app">
+      <div class="toolbar">
+        <button class="button-primary">新增</button>
+      </div>
       <table>
         <tr>
           <th width="200">id</th>
@@ -27,6 +30,22 @@
           <td><a v-on:click="taskDel(task)">删除</a></td>
         </tr>
       </table>
+      <div class="cron-dialog-wrapper">
+        <div class="cron-dialog">
+          <div>
+            <label>周期</label>
+            <select>
+              <option v-for="item in units" :key="item">{{item}}</option>
+            </select>
+          </div>
+          <div>
+            <label>回掉地址</label>
+            <input />
+          </div>
+
+
+        </div>
+      </div>
     </div>
     <script>
     var GET_HEADER = {
@@ -36,6 +55,7 @@
     var app = new Vue({
       el:'#app',
       data:{
+        units: ['Minute', 'Hour', 'Day', 'Week', 'Month', 'Year'],
         taskList:null
       },
       methods: {

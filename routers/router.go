@@ -11,8 +11,6 @@ import (
 func SetupRoutes() *mux.Router {
 	router := mux.NewRouter()
 
-	// router.HandleFunc("/", controllers.Index).Methods("GET")
-	// router.HandleFunc("/index", controllers.Index).Methods("GET")
 	router.HandleFunc("/tasks", controllers.Tasks).Methods("GET")
 	router.HandleFunc("/task/add", controllers.TaskAdd).Methods("POST")
 	router.HandleFunc("/task/del/{sid}", controllers.TaskDel).Methods("GET")
