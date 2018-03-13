@@ -18,6 +18,7 @@
           <th>结果</th>
           <th>下次</th>
           <th>回调</th>
+          <th>Header</th>
           <th>操作</th>
         </tr>
         <tr v-for="task in taskList">
@@ -27,6 +28,7 @@
           <td>{{task.runResult}}</td>
           <td>{{task.time}}</td>
           <td>{{task.url}}</td>
+          <td>{{task.header}}</td>
           <td><a v-on:click="taskDel(task)">删除</a></td>
         </tr>
       </table>
@@ -52,6 +54,10 @@
             <label>回掉地址</label>
             <input v-model="formData.url" />
           </div>
+          <div class="cron-form-item">
+            <label>回掉头部设置</label>
+            <textarea v-model="headerForm" rows="4"></textarea>
+          </div>
           <div class="cron-dialog-footer">
             <button class="button-primary" @click="handleSave">提交</button>
             <button @click="handleCancel">取消</button>
@@ -69,6 +75,7 @@
       data:{
         units: ['Minute', 'Hour', 'Day', 'Week', 'Month', 'Year'],
         methods: ['GET', "POST", "PUT", "DELETE"],
+        headerForm: "",
         formData: {
           unit: 'Minute',
           method: 'GET'
@@ -94,6 +101,18 @@
           this.addForm = true;
         },
         handleSave () {
+          let header = {}
+          if (this.headerForm) {
+            let heads = this.headerForm.split(';')
+            for (let head of heads) {
+              let keyValue = head.split(":")
+              if (keyValue && keyValue.length == 2) {
+                header[keyValue[0]] = keyValue[1]
+              }
+            }
+          }
+          this.formData.header = header
+
           fetch('task/add', {
             method: 'POST', // or 'PUT'
             body: JSON.stringify(this.formData),
