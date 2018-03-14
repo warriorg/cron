@@ -12,7 +12,6 @@
       </div>
       <table>
         <tr>
-          <th width="200">id</th>
           <th width="100">单位</th>
           <th width="100">上次执行</th>
           <th>结果</th>
@@ -22,7 +21,6 @@
           <th>操作</th>
         </tr>
         <tr v-for="task in taskList">
-          <td>{{task.id}}</td>
           <td>{{task.unit}}</td>
           <td>{{task.lastRun}}</td>
           <td>{{task.runResult}}</td>
