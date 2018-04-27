@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log"
-	"time"
 )
 
 // Task 精度支持到分钟
@@ -59,7 +58,7 @@ func init() {
 func initJob() {
 	list := Tasks()
 	for _, task := range list {
-		joinTask(task)
+		task.Join()
 	}
 }
 
@@ -75,7 +74,7 @@ func TaskAdd(body []byte) error {
 	task := to.toTask(md5)
 	task.Save()
 
-	joinTask(task)
+	task.Join()
 	return nil
 }
 
@@ -95,51 +94,4 @@ func TaskDelete(id string) {
 	task.Delete()
 	s := gocron.GetScheduler()
 	s.DeleteJobByID(id)
-}
-
-func joinTask(task *models.Task) error {
-	log.Println("join task --> " + task.Id)
-	j := gocron.NewJob(task.Id, task.Every, task.Unit, task.Time.Time)
-	j.Do(taskRun, task.Id)
-
-	s := gocron.GetScheduler()
-	s.Add(j)
-
-	return nil
-}
-
-func taskRun(j *gocron.Job, id string) {
-	log.Println("run task: ", time.Now(), id)
-
-	task, err := models.FindById(id)
-	if task == nil {
-		log.Println("task nil, remove job : ", j)
-		j.Delete()
-		return
-	}
-
-	time.Sleep(20 * time.Second)
-
-	// task.Time = j.NextRun().Format(DATE_FORMAT)
-	nextRun := j.NextRun()
-	task.Time = lib.Timestamp{nextRun}
-	task.LastRun = j.LastRun()
-	task.Count++
-	task.RunResult = "success"
-	err = task.Callback()
-	if err != nil {
-		task.RunResult = err.Error()
-		//回调失败
-		log.Println("回调错误：", err.Error(), "任务：", task)
-	}
-
-	models.SaveHistory(task)
-	if (task.EndTime.After(time.Unix(0, 0)) && time.Now().After(task.EndTime.Time)) || task.Unit == "" {
-		log.Println("remove task : ", task)
-		j.Delete()
-		task.Delete()
-	} else {
-		task.Update()
-	}
-
 }

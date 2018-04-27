@@ -1,6 +1,7 @@
 package models
 
 import (
+	"cron/gocron"
 	"cron/lib"
 	"encoding/json"
 	"errors"
@@ -130,12 +131,51 @@ func (task *Task) Callback() (err error) {
 	return nil
 }
 
-func SaveHistory(task *Task) {
-	hist := &TaskHistory{}
-	hist.Task = task
-	hist.RunTime = time.Now()
-	err := db.C(CTaskHistories).Insert(hist)
-	CheckErr(err)
+func (task *Task) Join() error {
+	log.Println("join task --> " + task.Id)
+	j := gocron.NewJob(task.Id, task.Every, task.Unit, task.Time.Time)
+	j.Do(task)
+
+	s := gocron.GetScheduler()
+	s.Add(j)
+
+	return nil
+}
+
+func (task *Task) Run(job *gocron.Job) {
+	log.Printf("Run task id %s ", job.JobID())
+
+	t, err := FindById(job.JobID())
+	if t == nil {
+		log.Println("task nil, remove job : ", job)
+		job.Delete()
+		return
+	}
+
+	// time.Sleep(20 * time.Second)
+
+	// task.Time = j.NextRun().Format(DATE_FORMAT)
+	nextRun := job.NextRun()
+	t.Time = lib.Timestamp{nextRun}
+	t.LastRun = job.LastRun()
+	t.Count++
+	t.RunResult = "success"
+	err = t.Callback()
+	if err != nil {
+		t.RunResult = err.Error()
+		//回调失败
+		log.Println("回调错误：", err.Error(), "任务：", task)
+	}
+
+	SaveHistory(t)
+	if (t.EndTime.After(time.Unix(0, 0)) && time.Now().After(t.EndTime.Time)) || t.Unit == "" {
+		log.Println("remove task : ", task)
+		job.Delete()
+		t.Delete()
+	} else {
+		t.Update()
+	}
+
 }
 
 func (task *Task) String() string {
@@ -145,6 +185,14 @@ func (task *Task) String() string {
 
 type TaskHistory struct {
 	*Task
-	Id      bson.ObjectId `bson:"_id,omitempty"`
+	ID      bson.ObjectId `bson:"_id,omitempty"`
 	RunTime time.Time
+}
+
+func SaveHistory(task *Task) {
+	hist := &TaskHistory{}
+	hist.Task = task
+	hist.RunTime = time.Now()
+	err := db.C(CTaskHistories).Insert(hist)
+	CheckErr(err)
 }

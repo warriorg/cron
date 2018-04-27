@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+type JobRun interface {
+	Run(job *Job)
+}
+
 type Job struct {
 	// pause interval * unit bettween runs
 	interval uint64
@@ -26,11 +30,10 @@ type Job struct {
 	runing bool
 
 	unit string
-	// Map for the function task store
-	funcs interface{}
-	// Map for function and  params of function
-	fparams []interface{}
-	delete  bool
+
+	jobRun JobRun
+
+	delete bool
 }
 
 func NewJob(id string, interval uint64, unit string, time time.Time) *Job {
@@ -42,6 +45,10 @@ func NewJob(id string, interval uint64, unit string, time time.Time) *Job {
 		runing:   false,
 		delete:   false,
 	}
+}
+
+func (j *Job) JobID() string {
+	return j.jobId
 }
 
 func (j *Job) String() string {
@@ -70,36 +77,33 @@ func (j *Job) shouldRun() bool {
 
 func (j *Job) run() {
 	j.runing = true
-	log.Println("run task")
 
-	f := reflect.ValueOf(j.funcs)
-	params := j.fparams
-	if len(params)+1 != f.Type().NumIn() {
-		log.Println("The number of param is not adapted.")
-	}
-
-	in := make([]reflect.Value, len(params)+1)
-	in[0] = reflect.ValueOf(j)
-	for k, param := range params {
-		in[k+1] = reflect.ValueOf(param)
-	}
+	// f := reflect.ValueOf(j.funcs)
+	// params := j.fparams
+	// if len(params)+1 != f.Type().NumIn() {
+	// 	log.Println("The number of param is not adapted.")
+	// }
+	//
+	// in := make([]reflect.Value, len(params)+1)
+	// in[0] = reflect.ValueOf(j)
+	// for k, param := range params {
+	// 	in[k+1] = reflect.ValueOf(param)
+	// }
 
 	j.lastRun = time.Now()
 	j.scheduleNextRun()
-	f.Call(in)
+	j.jobRun.Run(j)
+	// f.Call(in)
 	j.runing = false
 }
 
-func (j *Job) Do(jobFun interface{}, params ...interface{}) {
-	typ := reflect.TypeOf(jobFun)
-	if typ.Kind() != reflect.Func {
-		panic("only function can be schedule into the job queue.")
-	}
+func (j *Job) Do(run JobRun) {
+	// typ := reflect.TypeOf(jobFun)
+	// if typ.Kind() != reflect.Func {
+	// 	panic("only function can be schedule into the job queue.")
+	// }
 
-	j.funcs = jobFun
-	j.fparams = params
-
-	// j.scheduleNextRun()
+	j.jobRun = run
 }
 
 //计算下次运行时间
