@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+// protoc -I ./proto ./proto/service.proto --go_out=plugins=grpc:proto
+
+package task;
+
+import "task.proto";
+import "google/api/annotations.proto";
+
+service TaskService {
+  rpc Add (TaskRequest) returns (TaskResponse) {
+    option (google.api.http) = {
+          post: "/v1/tasks"
+      };
+  }
+
+  rpc List (TaskRequest) returns (TaskResponse) {
+    option (google.api.http) = {
+      get: "/v1/tasks"
+    };
+  }
+}

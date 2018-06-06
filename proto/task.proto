@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package task;
+
+message TaskRequest {
+  google.protobuf.Timestamp time = 1;
+  google.protobuf.Timestamp endTime = 2;
+  int32 maxCount = 3;
+  int32 every = 4;
+  string unit = 5;
+  string url = 6;
+  string method = 7;
+  string body = 8;
+  map<string, string> header = 9;
+}
+
+message TaskResponse {
+  int32 code = 1;
+  string message = 2;
+}

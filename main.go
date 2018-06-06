@@ -15,18 +15,28 @@ func main() {
 	// runtime.GOMAXPROCS(runtime.NumCPU() * 2)
 	// log.Println("num cpu", runtime.NumCPU())
 	cmd := parseCmd()
-	fmt.Println(cmd)
+	// fmt.Println(cmd)
 	if cmd.versionFlag {
 		fmt.Println("version 0.0.1")
 	} else if cmd.helpFlag {
 		printUsage()
 	} else {
-		startServer(cmd)
+
+		if cmd.modeFlag == "web" {
+			startWebServer(cmd)
+		} else if cmd.modeFlag == "grpc" {
+			startGrpcServer(cmd)
+		}
+
 	}
 
 }
 
-func startServer(cmd *Cmd) {
+func startGrpcServer(cmd *Cmd) {
+
+}
+
+func startWebServer(cmd *Cmd) {
 
 	// 必须要先声明defer，否则不能捕获到panic异常
 	defer func() {
@@ -54,6 +64,7 @@ type Cmd struct {
 	helpFlag    bool
 	versionFlag bool
 	configFlag  string
+	modeFlag    string
 	args        []string
 }
 
@@ -63,6 +74,7 @@ func parseCmd() *Cmd {
 	flag.BoolVar(&cmd.helpFlag, "help", false, "print help message")
 	flag.BoolVar(&cmd.helpFlag, "?", false, "print help message")
 	flag.BoolVar(&cmd.versionFlag, "version", false, "print version and exit")
+	flag.StringVar(&cmd.modeFlag, "mode", "web", "mode web or grpc")
 	flag.StringVar(&cmd.configFlag, "c", "./", "set configuration file")
 	flag.Parse()
 	args := flag.Args()
@@ -73,5 +85,5 @@ func parseCmd() *Cmd {
 }
 
 func printUsage() {
-	fmt.Printf("Usage: %s [-options] [-c filename] [args...] \n", os.Args[0])
+	fmt.Printf("Usage: %s [-options] [--mode web|grpc][-c filename] [args...] \n", os.Args[0])
 }
