@@ -1,4 +1,5 @@
 .tags*
 .DS_Store
 data/db/
+go.sum
 build/
